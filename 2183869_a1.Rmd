@@ -1,0 +1,30 @@
+---
+title: "Assessment 1"
+author: "2183869"
+output: html_notebook
+---
+
+# Task 1
+## Section 1
+We examine the relationship between absolute/relative ranking and willingness to pay (WTP) using a simulated dataset that contains information on 244 participants on their WTP for a device that is either of low, medium or high rank (of storage), the type of rank (absolute or relative), and whether the participant was a first-time buyer or looking to replace their current device (in case the incumbent device is compared to the new one). Since we expect an interaction between the rank of the device and the type of rank presented, we first run a linear regression model predicting WTP using the type of rank interacted with the rank, and the type of valuer is also interacted with rank. We find no statistically significant between the type of rank nor its interactions while, we find that those shown high rank phones and looking for a replacement displayed 16 points higher WTP than their first-time buyer counterparts (SE = 17.03, $p<0.01$).
+
+```{r}
+library('tidyverse')
+library('emmeans')
+library('afex')
+library('cowplot')
+
+d1 <- read_csv('phones.csv')
+head(d1)
+d1 <- d1 %>% mutate(valuer=factor(valuer, levels=c('first','replacement')),
+                    rank=factor(rank, levels=c('low','medium','high')),
+                    type=factor(type, levels=c('absolute','relative')))
+
+a1 <- aov_car(wtp ~ type*rank + valuer*rank + Error(id), d1)
+summary(a1)
+```
+
+
+To test our hypothesis for a difference of means between groups, we run an ANOVA test to check for statistically significant differences between the groups. We only find statistically significant differences between the groups shown different ranks (see Figure 1) and the different rank-valuer pairs (see Figure 2). When testing for differences between the rank type groups (absolute or relative), we find no statistically significant differences. Meanwhile, the low-rank devices have an estimated mean 49.9 points lower WTP than the average WTP (SE = 7.34, $p<0.0001$) and the high-rank devices have an estimated mean 51.88 points greater WTP than the average (SE = 7.34, $p<0.0001$). 
+
+The contrasts test for the different rank-valuer pairs revealed that replacement buyers shown a high-rank device had a WTP 16.12 points greater than first-time buyers shown the same device (SE = 5.99, $p<0.05$), and 60.85 points greater than the average (SE = 9.29, $p<0.0001$).    
