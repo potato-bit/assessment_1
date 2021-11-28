@@ -121,7 +121,6 @@ for (x in c(4,14,122,190,246)) {
   d2[d2$Pid==x,'Task'] <- as_factor('Thrill')
 }
 d2 %>% filter(is.na(Task))
-
 ### renaming columns because capitalization is annoying
 d2 <- rename_with(d2, tolower)
 
@@ -132,6 +131,7 @@ d2 %>% group_by(task,order) %>% summarise(n=n())
 d2 %>% ggplot(aes(x=self)) + geom_histogram()
 d2 %>% ggplot(aes(x=other)) + geom_histogram()
 d2 %>% ggplot(aes(x=self,y=other)) + geom_point(position='jitter') + geom_smooth(method='lm',se=F)
+d2 %>% ggplot(aes(x=self,y=other,color=task)) + geom_point(position='jitter') 
 
 ##regression analysis
 #### setting treatment contrasts for now
@@ -144,6 +144,8 @@ l2 <- lm(other ~ self,d2)
 summary(l2)
 l3 <- lm(other ~ task*self + order,d2)
 summary(l3)
+l4 <- lm(other ~ self*order + task*self,d2)
+summary(l4)
 ### There is almost a 1:1 relationship between how much a participant rates 
 ### their own experience and how they expect others to enjoy the same experience.
 ### Further, those who rate other's experience first rate it 5 points higher than
@@ -174,6 +176,7 @@ e5 <- emmeans(a2,c('task','order'))
 summary(e5)
 
 con3 <- list(T_v_W=c(1/2,-1/2,1/2,-1/2),
-             S_v_O=c(1/2,1/2,-1/2,-1/2))
+             S_v_O=c(1/2,1/2,-1/2,-1/2),
+             OT_v_ST=c(-1,0,1,0))
 contrast(e5,con3,adjust='holm')
 

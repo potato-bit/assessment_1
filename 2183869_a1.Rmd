@@ -8,7 +8,7 @@ output: html_notebook
 ## Section 1
 We examine the relationship between absolute/relative ranking and willingness to pay (WTP) using a simulated dataset that contains information on 244 participants on their WTP for a device that is either of low, medium or high rank (of storage), the type of rank (absolute or relative), and whether the participant was a first-time buyer or looking to replace their current device (in case the incumbent device is compared to the new one). Since we expect an interaction between the rank of the device and the type of rank presented, we first run a linear regression model predicting WTP using the type of rank interacted with the rank, and the type of valuer is also interacted with rank. We find no statistically significant between the type of rank nor its interactions while, we find that those shown high rank phones and looking for a replacement displayed 16 points higher WTP than their first-time buyer counterparts (SE = 17.03, $p<0.01$).
 
-```{r}
+```{r, echo=FALSE}
 library('tidyverse')
 library('emmeans')
 library('afex')
@@ -21,10 +21,231 @@ d1 <- d1 %>% mutate(valuer=factor(valuer, levels=c('first','replacement')),
                     type=factor(type, levels=c('absolute','relative')))
 
 a1 <- aov_car(wtp ~ type*rank + valuer*rank + Error(id), d1)
-summary(a1)
+p1 <- afex_plot(a1,'type','rank',mapping=c('shape','linetype','color'), dodge=0.7,
+                data_geom=ggpol::geom_boxjitter, 
+                data_arg=list(width=0.5,
+                              jitter.params=list(width=0.01,height=0),
+                              alpha=0.1),
+                point_arg=list(size=2,color='black'),
+                error_arg=list(size=1.2,width=0,color='black')) + ggpubr::theme_pubclean()
+p2 <- afex_plot(a1,'rank','type',mapping=c('shape','linetype','color'), dodge=0.7,
+                data_geom=ggpol::geom_boxjitter, 
+                data_arg=list(width=0.5,
+                              jitter.params=list(width=0.01,height=0),
+                              alpha=0.1),
+                point_arg=list(size=2,color='black'),
+                error_arg=list(size=1.2,width=0,color='black')) + ggpubr::theme_pubclean()
+p3 <- afex_plot(a1,'valuer','rank',mapping=c('shape','linetype','color'), dodge=0.7,
+                data_geom=ggpol::geom_boxjitter, 
+                data_arg=list(width=0.5,
+                              jitter.params=list(width=0.01,height=0),
+                              alpha=0.1),
+                point_arg=list(size=2,color='black'),
+                error_arg=list(size=1.2,width=0,color='black')) + ggpubr::theme_pubclean()
+p4 <- afex_plot(a1,'rank','valuer',mapping=c('shape','linetype','color'), dodge=0.7,
+                data_geom=ggpol::geom_boxjitter, 
+                data_arg=list(width=0.5,
+                              jitter.params=list(width=0.01,height=0),
+                              alpha=0.1),
+                point_arg=list(size=2,color='black'),
+                error_arg=list(size=1.2,width=0,color='black')) + ggpubr::theme_pubclean()
+plot_grid(p1,p2,p3,p4,nrow=2)
 ```
-
+_**Figure 1:**_ Willingness to Pay for phones as a function of rank, type of rank, or type of valuer. From the top-left, WTP against type of rank with rank traces; WTP against rank with type of rank traces; WTP against type of valuer with rank traces; and WTP against rank with type of valuer traces. Points in the background are the raw data offset on the x-axis. Black points represent the mean along with boxplot for quartile values. Black bars represent the error bars.
 
 To test our hypothesis for a difference of means between groups, we run an ANOVA test to check for statistically significant differences between the groups. We only find statistically significant differences between the groups shown different ranks (see Figure 1) and the different rank-valuer pairs (see Figure 2). When testing for differences between the rank type groups (absolute or relative), we find no statistically significant differences. Meanwhile, the low-rank devices have an estimated mean 49.9 points lower WTP than the average WTP (SE = 7.34, $p<0.0001$) and the high-rank devices have an estimated mean 51.88 points greater WTP than the average (SE = 7.34, $p<0.0001$). 
 
-The contrasts test for the different rank-valuer pairs revealed that replacement buyers shown a high-rank device had a WTP 16.12 points greater than first-time buyers shown the same device (SE = 5.99, $p<0.05$), and 60.85 points greater than the average (SE = 9.29, $p<0.0001$).    
+The contrasts test for the different rank-valuer pairs revealed that replacement buyers shown a high-rank device had a WTP 16.12 points greater than first-time buyers shown the same device (SE = 5.99, $p<0.05$), and 60.85 points greater than the average (SE = 9.29, $p<0.0001$). 
+
+Thus, to answer the research question, the type of ranking (absolute or relative) does not have statistically significant effects on participant WTPs when buying new phones. However, whether the participant is a first-time buyer or a replacement buyer does have statistically significant effects at least when purchasing high-ranked devices implying that some contextual-based ranking is occurring.
+
+
+## Section 2
+```{r}
+library('tidyverse')
+library('emmeans')
+library('afex')
+library('cowplot')
+library('gganimate')
+
+
+# PART 1
+##data exploration
+### *import the dataset*
+d1 <- read_csv('phones.csv')
+head(d1)
+d1 <- d1 %>% mutate(valuer=factor(valuer, levels=c('first','replacement')),
+                    rank=factor(rank, levels=c('low','medium','high')),
+                    type=factor(type, levels=c('absolute','relative')))
+```
+```{r}
+### some basic summary statistics
+nrow(d1)
+```
+```{r}
+### distribution of WTP
+d1 %>% ggplot(aes(x=wtp)) + geom_histogram()
+```
+```{r}
+### count of participants by valuer groups
+d1 %>% group_by(valuer) %>% summarise(n=n()) 
+```
+```{r}
+### count of participants by rank groups
+d1 %>% group_by(rank) %>% summarise(n=n())
+```
+```{r}
+### count of participants by type of rank groups
+d1 %>% group_by(type) %>% summarise(n=n())
+```
+```{r}
+### count of participants by rank and type of rank groups
+d1 %>% group_by(rank,type) %>% summarise(n=n())
+```
+```{r}
+### count of participants by valuer and rank groups
+d1 %>% group_by(valuer,rank) %>%  summarise(n=n())
+```
+```{r}
+### count of participants by valuer and type of rank groups
+d1 %>% group_by(valuer,type) %>%  summarise(n=n())
+```
+```{r}
+##regression analysis
+
+#### setting treatment contrasts for now
+afex::set_treatment_contrasts()
+
+### hypothesis: there exist interaction effects between type of rank and rank
+### value in eliciting WTP. Further, the type of valuer may also affect WTP if 
+### new phone is compared to old one (more interaction effects?)
+l1 <- lm(wtp ~ type*rank + valuer*rank, d1)
+summary(l1)
+### the statistically significant effects are `rankhigh` the high ranked devices
+### elicit 34 points higher WTP; and the interaction effect between high ranked 
+### devices and valuers who are looking for a replacement device i.e, those
+### looking for a replacement valued high ranked devices 46.6 points higher than
+### first-time buyers implying that replacement buyers would accept higher prices.
+### The statistically insignificant values follow the expected trends, except 
+### that replacement buyers have 12 points lower of WTP than first time buyers 
+### on average.
+```
+```{r}
+##ANOVA testing
+#### setting sum contrasts
+afex::set_sum_contrasts()
+
+a1 <- aov_car(wtp ~ type*rank + valuer*rank + Error(id), d1)
+summary(a1)
+### the ANOVA test shows us there is a significant difference between the rank 
+### groups and the interaction affect between the type of valuer and rank; and 
+### there is no statistically significant difference between the other groups
+```
+```{r}
+p1 <- afex_plot(a1,'type','rank',mapping=c('shape','linetype','color'), dodge=0.7,
+                data_geom=ggpol::geom_boxjitter, 
+                data_arg=list(width=0.5,
+                              jitter.params=list(width=0.01,height=0),
+                              alpha=0.1),
+                point_arg=list(size=2,color='black'),
+                error_arg=list(size=1.2,width=0,color='black')) + ggpubr::theme_pubclean()
+p2 <- afex_plot(a1,'rank','type',mapping=c('shape','linetype','color'), dodge=0.7,
+                data_geom=ggpol::geom_boxjitter, 
+                data_arg=list(width=0.5,
+                              jitter.params=list(width=0.01,height=0),
+                              alpha=0.1),
+                point_arg=list(size=2,color='black'),
+                error_arg=list(size=1.2,width=0,color='black')) + ggpubr::theme_pubclean()
+p3 <- afex_plot(a1,'valuer','rank',mapping=c('shape','linetype','color'), dodge=0.7,
+                data_geom=ggpol::geom_boxjitter, 
+                data_arg=list(width=0.5,
+                              jitter.params=list(width=0.01,height=0),
+                              alpha=0.1),
+                point_arg=list(size=2,color='black'),
+                error_arg=list(size=1.2,width=0,color='black')) + ggpubr::theme_pubclean()
+p4 <- afex_plot(a1,'rank','valuer',mapping=c('shape','linetype','color'), dodge=0.7,
+                data_geom=ggpol::geom_boxjitter, 
+                data_arg=list(width=0.5,
+                              jitter.params=list(width=0.01,height=0),
+                              alpha=0.1),
+                point_arg=list(size=2,color='black'),
+                error_arg=list(size=1.2,width=0,color='black')) + ggpubr::theme_pubclean()
+plot_grid(p1,p2,p3,p4,nrow=2)
+```
+```{r}
+### As the regression analysis showed, there is only a significant difference in
+### in means between replacement valuers and high rank buyers. Otherwise, the 
+### main determining factor when buying a new phone is the rank itself 
+### regardless of type or valuer.
+
+##follow-up tests
+e1 <- emmeans(a1,c('type','rank'))
+summary(e1)
+### the highest mean comes from the high relative rank, but not that there is 
+### not a large difference (not more than 10) between absolute and relative 
+### ranks for each rank.
+```
+```{r}
+### test contrasts
+con1 <- list(A_v_R = c(1/3,-1/3,1/3,-1/3,1/3,-1/3),
+             L_v_E = c(1/2,1/2,rep(-1/4,4)),
+             M_v_E = c(-1/4,-1/4,1/2,1/2,-1/4,-1/4),
+             H_v_E = c(rep(-1/4,4),1/2,1/2))
+contrast(e1,con1,adjust='holm')
+### as expected only rank effects are statistically significant
+```
+```{r}
+e2 <- emmeans(a1,c('valuer','rank'))
+summary(e2)
+### like the ANOVA test suggests, only the replacement:high pair has a
+### significant difference in means. Interestingly for low ranked devices, 
+### replacement buyers value them less than first-time buyers. This suggests a 
+### greater spread in WTP for replacement buyers than first-time buyers.
+```
+```{r}
+d1 %>% ggplot(aes(x=wtp,fill=valuer))  + geom_histogram(position='dodge',alpha=0.5)
+### as can be seen, the range of replacement buyers' WTPs exceed that of first time buyers.
+```
+```{r}
+### test contrasts
+con2 <- list(F_v_R = c(1/3,-1/3,1/3,-1/3,1/3,-1/3),
+             L_v_E = c(1/2,1/2,rep(-1/4,4)),
+             M_v_E = c(-1/4,-1/4,1/2,1/2,-1/4,-1/4),
+             H_v_E = c(rep(-1/4,4),1/2,1/2),
+             Rh_v_Fh = c(rep(0,4),-1/2,1/2),
+             Rh_v_E = c(rep(-1/5,5),1),
+             Fl_v_Rl = c(1/2,-1/2,rep(0,4)))
+contrast(e2,con2,adjust='holm')
+### from the ANOVA visualization earlier, it looked like there might be a 
+### difference between low ranked devices and type of valuers, however the 
+### contrasts test shows us this is not statistically  significant.The contrasts
+### test confirms that replacement buyers buying high rank devices report the 
+### highest WTPs, 60.8 points greater than everybody else on average.
+```
+
+
+
+# Task 2
+## Section 1
+We explore the relationship between own enjoyment of a product and expected enjoyment by others of the same product using a simulated dataset about perceived value of an amusement ride. It contains information on own reported rating of the ride by participants; how much they expect other to enjoy the same ride; the order in which they rated (self or others' first); and further, participants were randomly assigned to two tasks, one to rate the excitement of the ride and the other to report how much they would be willing to pay for the ride. This data is analysed using a linear regression estimation of the following equation which controls for any possible interaction effects:
+$$ other=\beta_0+\beta_1self+\delta_1taskWTP+\delta_2orderOtherFirst+\beta_2taskWTP*self+\beta_3orderOtherFirst*self+\epsilon $$
+The distribution of both self and other ratings show that people tend to avoid giving median scores leading to a bimodal distribution. The results of the linear regression suggest that there is almost a perfect relationship between how much a participant rates their own experience of a ride and how much they expect others to enjoy that ride (SE = 0.09711, $p<0.0001$). 
+
+Statistically significant effects were found for the interaction between the task and ratings for themselves (SE = 0.12, $p<0.005$). However, this is meaningless and likely a result of different scales for thrill levels and WTP i.e, while someone might rate a ride to have a thrill level of 90 on a 0 to 100 rating scale, very few people would be willing to also pay £90 for the same ride. Thus the distributions of thrill ratings are much more left skewed while WTP ratings are right skewed. 
+
+ANOVA testing between task and order groups show that there is a statistically significant difference between the order groups in  the Thrill task where those who rated others first gave ratings 12.7 points greater than the average (SE = 3.87, $p<0.005$) and 7.2 points greater than the average in general (across both tasks) (SE = 2.82,$p<0.05$).
+```{r}
+ani1 <- ggplot(d2,aes(x=self,y=other)) + geom_point() + geom_smooth(method='lm',se=FALSE,color='maroon') +
+  geom_text(aes(x=100,y=100,label=paste('Order:',as.factor(order))),
+            hjust=0,size=5,color='grey20') +
+  theme(panel.background=element_rect(fill='white'),
+        panel.grid=element_line(color='grey80'),
+        axis.line=element_line(color='black'),
+        axis.ticks=element_line(color='black'),
+        axis.title=element_text(size=12,face='bold')
+        ) +
+  transition_states(order,transition_length=2,state_length=1) + enter_fade() +
+  exit_fade() + ease_aes('sine-in-out')
+animate(ani1)
+```
+
