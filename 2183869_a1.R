@@ -107,7 +107,7 @@ contrast(e2,con2,adjust='holm')
 
 
 # PART 2
-##data exploration
+##data exploration & cleanup
 d2 <- read_csv('ride.csv')
 head(d2)
 d2 <- d2 %>% mutate(Task=factor(Task, levels=c('Thrill','WTP')),
